@@ -1,4 +1,4 @@
-input ="""
+input = """
 seeds: 79 14 55 13
 
 seed-to-soil map:
@@ -34,30 +34,44 @@ humidity-to-location map:
 56 93 4
 """
 
-def get_groups(lines: str, start: str, end: str) -> list[str]:
-    return lines[lines.find(start)+len(start):lines.rfind(end)].strip().splitlines()
 
-def convert_groups_to_map(groups: list[str]) -> dict[int, int]:
-    group_dict = {}
+def get_groups(lines: str, start: str, end: str) -> list[str]:
+    return lines[lines.find(start) + len(start) : lines.rfind(end)].strip().splitlines()
+
+
+def convert_group_to_ranges(groups: list[str]) -> list[tuple[int, int, int]]:
+    ranges = []
     for group in groups:
         destination, source, length = map(int, group.split())
-        for i in range(length):
-            group_dict.setdefault(source + i, destination + i)
-    return group_dict
+        ranges.append((destination, source, length))
+    return ranges
 
-def get_next_group(current: list[int], group: dict[int, int]) -> list[int]:
-    return [group.get(item, item) for item in current]
 
-def handle_group(lines: str, prev: list[int], start: str, end: str) -> list[str]:
+def get_next_group(current: list[int], ranges: list[tuple[int, int, int]]) -> list[int]:
+    next_group = []
+    for item in current:
+        for destination, source, length in ranges:
+            if source <= item <= source + length - 1:
+                offset = source - destination
+                newval = item - offset
+                break
+            else:
+                newval = item
+        next_group.append(newval)
+    return next_group
+
+
+def handle_group(lines: str, prev: list[int], start: str, end: str) -> list[int]:
     groups = get_groups(lines, start, end)
-    group_dict = convert_groups_to_map(groups)
-    return get_next_group(prev, group_dict)
+    ranges = convert_group_to_ranges(groups)
+    return get_next_group(prev, ranges)
+
 
 def get_lowest_location(input: str):
     lines = input.strip()
 
-    seeds = get_groups(lines, "seeds:", "seed-to-soil map:")[0].split(" ")
-    seeds = list(map(int, seeds))
+    seeds = get_groups(lines, "seeds:", "seed-to-soil map:")[0]
+    seeds = list(map(int, seeds.split(" ")))
 
     soils = handle_group(lines, seeds, "seed-to-soil map:", "soil-to-fertilizer map:")
     fertilizers = handle_group(lines, soils, "soil-to-fertilizer map:", "fertilizer-to-water map:")
@@ -66,7 +80,7 @@ def get_lowest_location(input: str):
     temperatures = handle_group(lines, lights, "light-to-temperature map:", "temperature-to-humidity map:")
     humidities = handle_group(lines, temperatures, "temperature-to-humidity map:", "humidity-to-location map:")
     locations = handle_group(lines, humidities, "humidity-to-location map:", "")
-    
+
     return min(locations)
 
 
