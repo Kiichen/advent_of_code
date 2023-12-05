@@ -67,11 +67,10 @@ def handle_group(lines: str, prev: list[int], start: str, end: str) -> list[int]
     return get_next_group(prev, ranges)
 
 
-def get_lowest_location(input: str):
+def get_lowest_location(input: str, get_seeds: callable):
     lines = input.strip()
 
-    seeds = get_groups(lines, "seeds:", "seed-to-soil map:")[0]
-    seeds = list(map(int, seeds.split(" ")))
+    seeds = get_seeds(lines)
 
     soils = handle_group(lines, seeds, "seed-to-soil map:", "soil-to-fertilizer map:")
     fertilizers = handle_group(lines, soils, "soil-to-fertilizer map:", "fertilizer-to-water map:")
@@ -83,8 +82,29 @@ def get_lowest_location(input: str):
 
     return min(locations)
 
+def get_seeds_as_lines(lines: str):
+    seeds = get_groups(lines, "seeds:", "seed-to-soil map:")[0]
+    return list(map(int, seeds.split(" ")))
 
-assert get_lowest_location(input) == 35
+def get_seeds_as_pairs(lines: str):
+    seeds = get_groups(lines, "seeds:", "seed-to-soil map:")[0]
+    seeds = seeds.split(" ")
+    actual = []
+    for index, seed in enumerate(seeds):
+        odd = (index % 2) == 0
+        if not odd:
+            prev = int(seeds[index-1])
+            for i in range(prev, prev + int(seed)):
+                actual.append(i)
+    return actual
+
+
+assert get_lowest_location(input, get_seeds_as_lines) == 35
 
 with open("2023/5/input.txt") as f:
-    print(get_lowest_location(f.read()))
+    print(get_lowest_location(f.read(), get_seeds_as_lines))
+
+assert get_lowest_location(input, get_seeds_as_pairs) == 46
+
+with open("2023/5/input.txt") as f:
+    print(get_lowest_location(f.read(), get_seeds_as_pairs))
