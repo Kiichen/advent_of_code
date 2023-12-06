@@ -22,7 +22,8 @@ def get_ways_of_record_beating(input: str, merge=False):
             rest_mm = time - speed
             distance = speed * rest_mm
             if distance > record:
-                possible_wins += 1
+                possible_wins = rest_mm + 1 - speed
+                break
         total *= possible_wins
     return total
 
