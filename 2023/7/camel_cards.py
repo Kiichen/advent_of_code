@@ -6,8 +6,6 @@ KTJJT 220
 QQQJA 483
 """
 
-card_hands = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
-
 
 class Hand:
     bid: int
@@ -22,19 +20,39 @@ class Hand:
         self.rank = None
 
 
-def get_score(input: str):
+def get_score(input: str, joker=False):
+    card_hands = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+    if joker:
+        card_hands = ["A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
+
     lines = input.strip().splitlines()
     hands: list[Hand] = []
+
     for line in lines:
         hand, bid = line.split()
         bid = int(bid)
 
+        if joker:
+            joker_count = hand.count("J")
+
         hand_amounts = {}
         for card in hand:
+            if joker and card == "J":
+                continue
             if card in hand_amounts:
                 hand_amounts[card] += 1
             else:
                 hand_amounts[card] = 1
+
+        if joker:
+            if not hand_amounts.values():
+                hand_amounts["J"] = joker_count
+            else:
+                max_amount = max(hand_amounts.values())
+                max_key = list(hand_amounts.keys())[
+                    list(hand_amounts.values()).index(max_amount)
+                ]
+                hand_amounts[max_key] = max_amount + joker_count
 
         fives = [amount == 5 for amount in hand_amounts.values()]
         quads = [amount == 4 for amount in hand_amounts.values()]
@@ -71,3 +89,9 @@ assert get_score(input) == 6440
 
 with open("2023/7/input.txt") as f:
     print(get_score(f.read()))
+
+
+assert get_score(input, True) == 5905
+
+with open("2023/7/input.txt") as f:
+    print(get_score(f.read(), True))
