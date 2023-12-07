@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 input = """
 32T3K 765
 T55J5 684
@@ -23,7 +26,7 @@ class Hand:
 def get_score(input: str, joker=False):
     card_hands = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
     if joker:
-        card_hands = ["A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
+        card_hands.append(card_hands.pop(card_hands.index("J")))
 
     lines = input.strip().splitlines()
     hands: list[Hand] = []
@@ -35,37 +38,22 @@ def get_score(input: str, joker=False):
         if joker:
             joker_count = hand.count("J")
 
-        hand_amounts = {}
-        for card in hand:
-            if joker and card == "J":
-                continue
-            if card in hand_amounts:
-                hand_amounts[card] += 1
-            else:
-                hand_amounts[card] = 1
+        hand_amounts = Counter(hand.replace("J", "") if joker else hand)
 
         if joker:
             if not hand_amounts.values():
                 hand_amounts["J"] = joker_count
             else:
-                max_amount = max(hand_amounts.values())
-                max_key = list(hand_amounts.keys())[
-                    list(hand_amounts.values()).index(max_amount)
-                ]
-                hand_amounts[max_key] = max_amount + joker_count
-
-        fives = [amount == 5 for amount in hand_amounts.values()]
-        quads = [amount == 4 for amount in hand_amounts.values()]
-        triples = [amount == 3 for amount in hand_amounts.values()]
-        pairs = [amount == 2 for amount in hand_amounts.values()]
+                max_key = max(hand_amounts, key=hand_amounts.get)
+                hand_amounts[max_key] += joker_count
 
         highest_match = [
-            any(fives),
-            any(quads),
-            any_fullhouse := any(triples) and any(pairs),
-            any(triples) and not any_fullhouse,
-            sum(pairs) == 2,
-            sum(pairs) == 1,
+            5 in hand_amounts.values(),
+            4 in hand_amounts.values(),
+            3 in hand_amounts.values() and 2 in hand_amounts.values(),
+            3 in hand_amounts.values() and 2 not in hand_amounts.values(),
+            2 in hand_amounts.values() and list(hand_amounts.values()).count(2) == 2,
+            2 in hand_amounts.values() and list(hand_amounts.values()).count(2) == 1,
             True,
         ].index(True)
         hands.append(Hand(bid, hand, highest_match))
